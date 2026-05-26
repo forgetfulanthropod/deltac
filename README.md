@@ -213,3 +213,23 @@ Notes:
 - **Scheduling**
   - dependencies + points + worker availability
   - automatic burndown + critical path + editable schedule
+
+### Current demo (stubs implemented)
+
+- Persona selection → Owner/Worker projects home
+- Interactive **New project** wizard (basics, photo stubs, generate 3 scope options, select)
+- Sample project: live burndown animation + toggleable tasks
+- **Project sections tabs** inside detail: Overview + rich **Scoping** / **Sourcing** (vendor connect + Accept all demo) / **Scheduling** (critical path stub) demos
+- Worker account setup stub + sample tasks
+
+See `src/app/residential/owner/projects/new.tsx` and `[projectId].tsx` for the stub implementations.
+
+### Web testing at localhost:3000
+
+```bash
+npm run export:web
+python3 -m http.server 3000 --directory dist
+# then open http://localhost:3000/  (or /residential/owner/projects/new.html)
+```
+
+Client JS powers all interactions (toggles, tabs, forms). The pre-rendered HTML shells are also served for direct deep links.

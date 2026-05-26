@@ -4,50 +4,50 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { MaxContentWidth, Radius, Shadows, Spacing } from '@/constants/theme';
 
-export default function PersonaSelectScreen() {
+export default function DeltaEntry() {
   return (
     <ThemedView style={styles.page}>
       <SafeAreaView style={styles.safeArea}>
         <ThemedView style={styles.header}>
-          <ThemedText type="title">Delta</ThemedText>
-          <ThemedText themeColor="textSecondary" style={styles.subtitle}>
-            Rivvr Homes · Residential
-          </ThemedText>
-          <ThemedText themeColor="textSecondary" style={styles.subtitle}>
-            Choose your role to continue.
+          <ThemedText type="title" style={{ fontSize: 52, lineHeight: 54 }}>Delta</ThemedText>
+          <ThemedText style={{ fontSize: 18, color: '#8D5E3A', marginTop: 4 }}>
+            by Rivvr Homes
           </ThemedText>
         </ThemedView>
 
-        <ThemedView style={styles.cards}>
-          <Pressable
-            accessibilityRole="button"
-            onPress={() => router.push('/residential/owner/projects')}
-            style={({ pressed }) => [styles.cardPressable, pressed && styles.pressed]}>
-            <ThemedView type="backgroundElement" style={styles.card}>
-              <ThemedText type="subtitle">Project Owner</ThemedText>
-              <ThemedText themeColor="textSecondary">
-                Generate scope options, source materials, and schedule trades.
-              </ThemedText>
-            </ThemedView>
-          </Pressable>
+        <ThemedText style={{ fontSize: 22, lineHeight: 28, marginTop: 12 }}>
+          See what your home could become.
+        </ThemedText>
 
-          <Pressable
-            accessibilityRole="button"
-            onPress={() => router.push('/residential/worker/projects')}
-            style={({ pressed }) => [styles.cardPressable, pressed && styles.pressed]}>
-            <ThemedView type="backgroundElement" style={styles.card}>
-              <ThemedText type="subtitle">Worker</ThemedText>
-              <ThemedText themeColor="textSecondary">
-                Join projects, take tasks, and update progress from the field.
-              </ThemedText>
-            </ThemedView>
-          </Pressable>
-        </ThemedView>
+        <ThemedText style={{ marginTop: 8, opacity: 0.7, fontSize: 15 }}>
+          Point your camera at any space. Watch it transform.
+        </ThemedText>
 
-        <ThemedText type="small" themeColor="textSecondary" style={styles.footer}>
-          Projects → Stories → Tasks · points · burndown · critical path
+        {/* Big beautiful primary action */}
+        <Pressable
+          onPress={() => router.push('/residential/owner/projects/new')}
+          style={({ pressed }) => [styles.primaryCta, pressed && { transform: [{ scale: 0.985 }] }]}>
+          <ThemedText type="smallBold" style={{ color: 'white', fontSize: 17 }}>
+            Imagine a new space →
+          </ThemedText>
+        </Pressable>
+
+        <ThemedText style={{ marginTop: 32, marginBottom: 8, opacity: 0.5, fontSize: 13 }}>
+          OR CONTINUE AS
+        </ThemedText>
+
+        <Pressable onPress={() => router.push('/residential/owner/projects')} style={styles.secondaryCta}>
+          <ThemedText>Project Owner — full workspace</ThemedText>
+        </Pressable>
+
+        <Pressable onPress={() => router.push('/residential/worker/projects')} style={[styles.secondaryCta, { marginTop: 8 }]}>
+          <ThemedText>Worker — find work &amp; update progress</ThemedText>
+        </Pressable>
+
+        <ThemedText type="small" style={styles.footer}>
+          Beautiful homes start with a clear vision.
         </ThemedText>
       </SafeAreaView>
     </ThemedView>
@@ -55,22 +55,35 @@ export default function PersonaSelectScreen() {
 }
 
 const styles = StyleSheet.create({
-  page: { flex: 1, flexDirection: 'row', justifyContent: 'center' },
+  page: { flex: 1, backgroundColor: '#FAF7F2' },
   safeArea: {
     flex: 1,
     maxWidth: MaxContentWidth,
+    marginHorizontal: 'auto',
     paddingHorizontal: Spacing.four,
-    paddingBottom: BottomTabInset + Spacing.three,
-    gap: Spacing.four,
+    paddingTop: 80,
   },
   header: {
-    paddingTop: Spacing.six,
-    gap: Spacing.one,
+    marginBottom: 12,
   },
-  subtitle: { marginTop: Spacing.half },
-  cards: { gap: Spacing.three },
-  cardPressable: { borderRadius: Spacing.four },
-  pressed: { opacity: 0.75 },
-  card: { padding: Spacing.four, borderRadius: Spacing.four, gap: Spacing.two },
-  footer: { marginTop: 'auto', textAlign: 'center' },
+  primaryCta: {
+    marginTop: 32,
+    backgroundColor: '#8D5E3A',
+    paddingVertical: 18,
+    borderRadius: 999,
+    alignItems: 'center',
+    ...Shadows.card,
+  },
+  secondaryCta: {
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    backgroundColor: '#F0EBE3',
+    borderRadius: Radius.lg,
+  },
+  footer: {
+    marginTop: 'auto',
+    textAlign: 'center',
+    opacity: 0.4,
+    paddingBottom: 20,
+  },
 });

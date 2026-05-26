@@ -44,6 +44,21 @@ export function BurndownPlayback({
           backgroundColor: theme.background,
         },
       ]}>
+      {/* Fill goes behind everything */}
+      <Animated.View
+        pointerEvents="none"
+        style={[
+          styles.fill,
+          {
+            backgroundColor: theme.backgroundElement,
+            width: progress.interpolate({
+              inputRange: [0, 1],
+              outputRange: ['0%', '100%'],
+            }),
+          },
+        ]}
+      />
+
       <View style={styles.grid} pointerEvents="none">
         {Array.from({ length: 4 }).map((_, i) => (
           <View
@@ -70,6 +85,7 @@ export function BurndownPlayback({
       </View>
 
       <Animated.View
+        pointerEvents="none"
         style={[
           styles.playhead,
           {
@@ -82,19 +98,6 @@ export function BurndownPlayback({
                 }),
               },
             ],
-          },
-        ]}
-      />
-
-      <Animated.View
-        style={[
-          styles.fill,
-          {
-            backgroundColor: theme.backgroundElement,
-            width: progress.interpolate({
-              inputRange: [0, 1],
-              outputRange: ['0%', '100%'],
-            }),
           },
         ]}
       />
@@ -116,6 +119,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     padding: Spacing.three,
     justifyContent: 'space-between',
+    zIndex: 1,
   },
   gridLine: {
     height: 1,
@@ -131,6 +135,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-end',
+    zIndex: 2,
   },
   dot: {
     width: 6,
@@ -143,6 +148,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     top: 0,
     opacity: 0.25,
+    zIndex: 0,
   },
   playhead: {
     position: 'absolute',
@@ -150,6 +156,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     width: 2,
     opacity: 0.35,
+    zIndex: 3,
   },
 });
 

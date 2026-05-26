@@ -20,7 +20,7 @@
       "predictiveBackGestureEnabled": false
     },
     "web": {
-      "baseUrl": "/deltac",
+      "baseUrl": "/",
       "output": "static",
       "favicon": "./assets/images/favicon.png"
     },

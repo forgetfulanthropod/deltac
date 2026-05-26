@@ -1,12 +1,14 @@
 import { useLocalSearchParams, useNavigation } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { BurndownPlayback } from '@/components/burndown-playback';
+import { StoryGallery } from '@/components/story-gallery';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 
 type Task = { id: string; title: string; points: number; done: boolean };
 type Story = { id: string; title: string; tasks: Task[] };
@@ -37,6 +39,7 @@ const SAMPLE_STORIES: Story[] = [
 export default function WorkerProjectDetailScreen() {
   const navigation = useNavigation();
   const { projectId } = useLocalSearchParams<{ projectId: string }>();
+  const theme = useTheme();
 
   useEffect(() => {
     navigation.setOptions({ title: 'Project' });
@@ -59,39 +62,58 @@ export default function WorkerProjectDetailScreen() {
   const percent = totalPoints === 0 ? 0 : Math.round((donePoints / totalPoints) * 100);
 
   return (
-    <ScrollView contentInset={{ bottom: BottomTabInset }} contentContainerStyle={styles.scrollBody}>
+    <ScrollView
+      contentInset={{ bottom: BottomTabInset }}
+      contentContainerStyle={[styles.scrollBody, { backgroundColor: theme.background }]}>
       <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.header}>
-          <ThemedText type="title">Sample Project</ThemedText>
-          <ThemedText themeColor="textSecondary">ID: {projectId}</ThemedText>
-          <ThemedText themeColor="textSecondary">
+        <ThemedView style={styles.hero}>
+          <ThemedText type="title" style={styles.heroTitle}>
+            Sample Project
+          </ThemedText>
+          <ThemedText themeColor="textSecondary" style={styles.heroMeta}>
             {percent}% complete · {donePoints}/{totalPoints} points
+          </ThemedText>
+          <ThemedText type="small" themeColor="textSecondary">
+            Worker · {projectId}
           </ThemedText>
         </ThemedView>
 
-        <ThemedView type="backgroundElement" style={styles.block}>
-          <ThemedText type="subtitle">Progress</ThemedText>
-          <ThemedText themeColor="textSecondary">
-            Playback shows task completion order (stub).
-          </ThemedText>
-          <BurndownPlayback key={playKey} percentComplete={percent} />
-          <Pressable
-            accessibilityRole="button"
-            onPress={() => setPlayKey((k) => k + 1)}
-            style={({ pressed }) => [styles.buttonPressable, pressed && styles.pressed]}>
-            <ThemedView style={styles.inlineButton}>
-              <ThemedText type="smallBold">Replay</ThemedText>
-            </ThemedView>
-          </Pressable>
+        <ThemedView type="backgroundElement" style={styles.card}>
+          <View style={styles.cardHeaderRow}>
+            <View style={styles.cardHeaderText}>
+              <ThemedText type="subtitle">Progress</ThemedText>
+              <ThemedText type="small" themeColor="textSecondary">
+                Playback shows completion order.
+              </ThemedText>
+            </View>
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => setPlayKey((k) => k + 1)}
+              style={({ pressed }) => [styles.pillPressable, pressed && styles.pressed]}>
+              <ThemedView style={styles.pill}>
+                <ThemedText type="smallBold">Replay</ThemedText>
+              </ThemedView>
+            </Pressable>
+          </View>
+
+          <BurndownPlayback key={playKey} percentComplete={percent} height={140} />
         </ThemedView>
 
         <ThemedView style={styles.section}>
           <ThemedText type="subtitle">Your tasks</ThemedText>
+          <ThemedText type="small" themeColor="textSecondary">
+            Gallery per story plus checklist.
+          </ThemedText>
 
           {SAMPLE_STORIES.map((story) => (
-            <ThemedView key={story.id} type="backgroundElement" style={styles.block}>
-              <ThemedText type="smallBold">{story.title}</ThemedText>
-              <ThemedView style={styles.taskList}>
+            <ThemedView key={story.id} type="backgroundElement" style={styles.card}>
+              <View style={styles.storyHeader}>
+                <ThemedText type="smallBold">{story.title}</ThemedText>
+              </View>
+
+              <StoryGallery storyId={story.id} />
+
+              <View style={[styles.taskList, { borderTopColor: theme.backgroundSelected }]}>
                 {story.tasks.map((task) => {
                   const done = !!doneById[task.id];
                   return (
@@ -100,18 +122,24 @@ export default function WorkerProjectDetailScreen() {
                       accessibilityRole="checkbox"
                       accessibilityState={{ checked: done }}
                       onPress={() => setDoneById((prev) => ({ ...prev, [task.id]: !done }))}
-                      style={({ pressed }) => [styles.taskRow, pressed && styles.pressed]}>
-                      <ThemedText style={styles.checkbox}>{done ? '☑' : '☐'}</ThemedText>
-                      <ThemedView style={styles.taskText}>
+                      style={({ pressed }) => [
+                        styles.taskRow,
+                        { borderBottomColor: theme.backgroundSelected },
+                        pressed && styles.pressed,
+                      ]}>
+                      <View style={[styles.checkDot, { borderColor: theme.backgroundSelected }]}>
+                        <ThemedText style={styles.checkText}>{done ? '✓' : ''}</ThemedText>
+                      </View>
+                      <View style={styles.taskText}>
                         <ThemedText>{task.title}</ThemedText>
                         <ThemedText type="small" themeColor="textSecondary">
                           {task.points} pts · assigned to you (stub)
                         </ThemedText>
-                      </ThemedView>
+                      </View>
                     </Pressable>
                   );
                 })}
-              </ThemedView>
+              </View>
             </ThemedView>
           ))}
         </ThemedView>
@@ -134,15 +162,34 @@ const styles = StyleSheet.create({
     paddingBottom: BottomTabInset + Spacing.three,
     gap: Spacing.four,
   },
-  header: { gap: Spacing.one },
-  section: { gap: Spacing.three },
-  block: { padding: Spacing.four, borderRadius: Spacing.four, gap: Spacing.two },
-  buttonPressable: { alignSelf: 'flex-start', borderRadius: Spacing.five },
-  inlineButton: { paddingHorizontal: Spacing.three, paddingVertical: Spacing.two, borderRadius: Spacing.five },
+  hero: { gap: Spacing.one, paddingTop: Spacing.two, paddingBottom: Spacing.one },
+  heroTitle: { fontSize: 40, lineHeight: 44 },
+  heroMeta: { marginTop: Spacing.half },
+  section: { gap: Spacing.two },
+  card: { padding: Spacing.four, borderRadius: Spacing.four, gap: Spacing.two },
+  cardHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
+  cardHeaderText: { flex: 1, gap: Spacing.half, paddingRight: Spacing.two },
+  pillPressable: { borderRadius: Spacing.five },
+  pill: { paddingHorizontal: Spacing.three, paddingVertical: Spacing.two, borderRadius: Spacing.five },
   pressed: { opacity: 0.75 },
-  taskList: { marginTop: Spacing.two, gap: Spacing.two },
-  taskRow: { flexDirection: 'row', gap: Spacing.two, alignItems: 'flex-start', paddingVertical: Spacing.one },
-  checkbox: { width: 22, textAlign: 'center' },
-  taskText: { flex: 1, gap: Spacing.half },
+  storyHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  taskList: { marginTop: Spacing.two, borderTopWidth: 1 },
+  taskRow: {
+    flexDirection: 'row',
+    gap: Spacing.two,
+    alignItems: 'center',
+    paddingVertical: Spacing.two,
+    borderBottomWidth: 1,
+  },
+  checkDot: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkText: { fontSize: 14, lineHeight: 16 },
+  taskText: { flex: 1, gap: 2 },
 });
 

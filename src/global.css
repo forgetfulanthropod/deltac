@@ -6,4 +6,99 @@
     ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, Courier New, monospace;
   --font-rounded: 'SF Pro Rounded', 'Hiragino Maru Gothic ProN', Meiryo, 'MS PGothic', sans-serif;
   --font-serif: Georgia, 'Times New Roman', serif;
+
+  /* Airbnb-inspired warmth */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+
+  --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-soft: 0 1px 6px rgba(0, 0, 0, 0.06);
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+/* Beautiful image treatment for the Imagine experience */
+.imagine-photo {
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  object-fit: cover;
+  width: 100%;
+}
+
+.imagine-option-card {
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: white;
+  box-shadow: var(--shadow-card);
+  transition: transform 0.2s cubic-bezier(0.23, 1, 0.32, 1), box-shadow 0.2s;
+}
+
+.imagine-option-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12);
+}
+
+.imagine-option-card img {
+  transition: transform 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.imagine-option-card:hover img {
+  transform: scale(1.04);
+}
+
+/* Warm, friendly inputs */
+input, textarea {
+  border: 1px solid #D9D0C4;
+  border-radius: var(--radius-md);
+  background: #FFFBF6;
+  font-family: inherit;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+input:focus, textarea:focus {
+  outline: none;
+  border-color: #8D5E3A;
+  box-shadow: 0 0 0 4px rgba(141, 94, 58, 0.12);
+  background: white;
+}
+
+/* Lovely buttons */
+.button-primary {
+  background: #8D5E3A;
+  color: white;
+  border: none;
+  border-radius: 999px;
+  font-weight: 600;
+  letter-spacing: -0.1px;
+}
+
+.button-primary:disabled {
+  opacity: 0.5;
+}
+
+.button-ghost {
+  background: transparent;
+  border: 1px solid #C8B8A8;
+  color: #2A2521;
+  border-radius: 999px;
+}
+
+.chip {
+  background: #F0EBE3;
+  color: #2A2521;
+  border-radius: 999px;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.15s;
+}
+
+.chip.active, .chip:hover {
+  background: #8D5E3A;
+  color: white;
 }
