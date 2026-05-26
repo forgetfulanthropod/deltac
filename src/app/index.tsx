@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { setPersona } from '@/lib/persona';
 import { MaxContentWidth, Radius, Shadows, Spacing } from '@/constants/theme';
 
 export default function DeltaEntry() {
@@ -38,12 +39,26 @@ export default function DeltaEntry() {
           OR CONTINUE AS
         </ThemedText>
 
-        <Pressable onPress={() => router.push('/residential/owner/projects')} style={styles.secondaryCta}>
+        <Pressable
+          onPress={() => {
+            setPersona('owner');
+            router.push('/residential/owner/projects');
+          }}
+          style={styles.secondaryCta}>
           <ThemedText>Project Owner — full workspace</ThemedText>
         </Pressable>
 
-        <Pressable onPress={() => router.push('/residential/worker/projects')} style={[styles.secondaryCta, { marginTop: 8 }]}>
+        <Pressable
+          onPress={() => {
+            setPersona('worker');
+            router.push('/residential/worker/projects');
+          }}
+          style={[styles.secondaryCta, { marginTop: 8 }]}>
           <ThemedText>Worker — find work &amp; update progress</ThemedText>
+        </Pressable>
+
+        <Pressable onPress={() => router.push('/commercial')} style={[styles.secondaryCta, { marginTop: 8 }]}>
+          <ThemedText>Commercial — enterprise (preview)</ThemedText>
         </Pressable>
 
         <ThemedText type="small" style={styles.footer}>

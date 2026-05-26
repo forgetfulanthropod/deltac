@@ -4,11 +4,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { useProjects } from '@/lib/projectStore';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 
-const SAMPLE_PROJECT_ID = 'sample-90';
-
 export default function WorkerProjectsScreen() {
+  const { projects } = useProjects();
+
   return (
     <ThemedView style={styles.page}>
       <SafeAreaView style={styles.safeArea}>
@@ -20,15 +21,26 @@ export default function WorkerProjectsScreen() {
         <ThemedView style={styles.section}>
           <ThemedText type="subtitle">Residential</ThemedText>
 
-          <Pressable
-            accessibilityRole="button"
-            onPress={() => router.push(`/residential/worker/projects/${SAMPLE_PROJECT_ID}`)}
-            style={({ pressed }) => [styles.pressable, pressed && styles.pressed]}>
-            <ThemedView type="backgroundElement" style={styles.card}>
-              <ThemedText type="smallBold">Sample Project</ThemedText>
-              <ThemedText themeColor="textSecondary">90% complete · view remaining tasks</ThemedText>
-            </ThemedView>
-          </Pressable>
+          {projects.map((project) => {
+            const pct =
+              project.totalPoints === 0
+                ? 0
+                : Math.round((project.completedPoints / project.totalPoints) * 100);
+            return (
+              <Pressable
+                key={project.id}
+                accessibilityRole="button"
+                onPress={() => router.push(`/residential/worker/projects/${project.id}`)}
+                style={({ pressed }) => [styles.pressable, pressed && styles.pressed]}>
+                <ThemedView type="backgroundElement" style={styles.card}>
+                  <ThemedText type="smallBold">{project.name}</ThemedText>
+                  <ThemedText themeColor="textSecondary">
+                    {pct}% complete · view your tasks
+                  </ThemedText>
+                </ThemedView>
+              </Pressable>
+            );
+          })}
 
           <Pressable
             accessibilityRole="button"
@@ -37,7 +49,7 @@ export default function WorkerProjectsScreen() {
             <ThemedView type="backgroundElement" style={styles.card}>
               <ThemedText type="smallBold">＋ Set up account</ThemedText>
               <ThemedText themeColor="textSecondary">
-                Create a worker profile to receive assignments.
+                Trade, service area, and availability
               </ThemedText>
             </ThemedView>
           </Pressable>
@@ -67,4 +79,3 @@ const styles = StyleSheet.create({
   card: { padding: Spacing.four, borderRadius: Spacing.four, gap: Spacing.one },
   footer: { marginTop: 'auto', textAlign: 'center' },
 });
-

@@ -4,11 +4,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { useProjects } from '@/lib/projectStore';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 
-const SAMPLE_PROJECT_ID = 'sample-90';
-
 export default function OwnerProjectsScreen() {
+  const { projects } = useProjects();
+
   return (
     <ThemedView style={styles.page}>
       <SafeAreaView style={styles.safeArea}>
@@ -20,15 +21,33 @@ export default function OwnerProjectsScreen() {
         <ThemedView style={styles.section}>
           <ThemedText type="subtitle">Residential</ThemedText>
 
-          <Pressable
-            accessibilityRole="button"
-            onPress={() => router.push(`/residential/owner/projects/${SAMPLE_PROJECT_ID}`)}
-            style={({ pressed }) => [styles.pressable, pressed && styles.pressed]}>
-            <ThemedView type="backgroundElement" style={styles.card}>
-              <ThemedText type="smallBold">Sample Project</ThemedText>
-              <ThemedText themeColor="textSecondary">90% complete · tap to play progress</ThemedText>
-            </ThemedView>
-          </Pressable>
+          {projects.map((project) => {
+            const pct =
+              project.totalPoints === 0
+                ? 0
+                : Math.round((project.completedPoints / project.totalPoints) * 100);
+            const isSample = project.id === 'sample-90';
+            return (
+              <Pressable
+                key={project.id}
+                accessibilityRole="button"
+                onPress={() => router.push(`/residential/owner/projects/${project.id}`)}
+                style={({ pressed }) => [styles.pressable, pressed && styles.pressed]}>
+                <ThemedView type="backgroundElement" style={styles.card}>
+                  <ThemedText type="smallBold">{project.name}</ThemedText>
+                  <ThemedText themeColor="textSecondary">
+                    {pct}% complete · {project.completedPoints}/{project.totalPoints} pts
+                    {isSample ? ' · sample' : ''}
+                  </ThemedText>
+                  {project.vision ? (
+                    <ThemedText type="small" themeColor="textSecondary">
+                      {project.vision} · {project.spaceType}
+                    </ThemedText>
+                  ) : null}
+                </ThemedView>
+              </Pressable>
+            );
+          })}
 
           <Pressable
             accessibilityRole="button"
@@ -37,7 +56,7 @@ export default function OwnerProjectsScreen() {
             <ThemedView type="backgroundElement" style={styles.card}>
               <ThemedText type="smallBold">＋ New project</ThemedText>
               <ThemedText themeColor="textSecondary">
-                Capture the space → generate remodel options → select scope
+                Imagine your space → choose a vision → start the plan
               </ThemedText>
             </ThemedView>
           </Pressable>
@@ -67,4 +86,3 @@ const styles = StyleSheet.create({
   card: { padding: Spacing.four, borderRadius: Spacing.four, gap: Spacing.one },
   footer: { marginTop: 'auto', textAlign: 'center' },
 });
-

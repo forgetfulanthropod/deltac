@@ -214,15 +214,15 @@ Notes:
   - dependencies + points + worker availability
   - automatic burndown + critical path + editable schedule
 
-### Current demo (stubs implemented)
+### Current demo (store-backed)
 
-- Persona selection → Owner/Worker projects home
-- Interactive **New project** wizard (basics, photo stubs, generate 3 scope options, select)
-- Sample project: live burndown animation + toggleable tasks
-- **Project sections tabs** inside detail: Overview + rich **Scoping** / **Sourcing** (vendor connect + Accept all demo) / **Scheduling** (critical path stub) demos
-- Worker account setup stub + sample tasks
-
-See `src/app/residential/owner/projects/new.tsx` and `[projectId].tsx` for the stub implementations.
+- **Persona** selection persists (Owner / Worker) via `src/lib/persona.ts`
+- **Projects** list and detail read from `src/lib/projectStore.ts` (sample + user-created projects)
+- **Imagine / New project**: basics form, photo capture (web upload + native image picker), vision compare, scope option (Refresh / Mid / Full), then `createProjectFromVision`
+- **Sample project**: burndown from real task `completedAt` events; task toggles persist (AsyncStorage / localStorage)
+- **Responsibilities tabs**: editable Scoping, Sourcing (vendors + cart + per-story order), Scheduling (critical path + timeline + task dates)
+- **Worker**: saved profile, tasks filtered by assignee; shared store syncs with owner view
+- **Commercial** preview at `/commercial` and API stub in `src/lib/api/client.ts` (local-only until backend is configured)
 
 ### Web testing at localhost:3000
 

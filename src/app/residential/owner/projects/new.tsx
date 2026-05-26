@@ -1,3 +1,4 @@
+import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
 import { Image, Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
@@ -5,6 +6,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { createProjectFromVision } from '@/lib/projectStore';
+import {
+  getStoriesForVisionAndScope,
+  SCOPE_OPTIONS,
+  type ScopeOptionId,
+} from '@/lib/visionTemplates';
 import { MaxContentWidth, Radius, Shadows, Spacing } from '@/constants/theme';
 
 // Beautiful visions powered by real generated images
@@ -54,7 +61,16 @@ const EXAMPLE_PROMPTS = [
   'Moody elegant with dark green',
 ];
 
+const BUDGET_BANDS = ['$15–30k', '$30–60k', '$60k+'] as const;
+const SPACE_TYPES = ['Kitchen', 'Bath', 'Whole home'] as const;
+
 export default function ImagineScreen() {
+  const [projectName, setProjectName] = useState('');
+  const [address, setAddress] = useState('');
+  const [spaceType, setSpaceType] = useState<(typeof SPACE_TYPES)[number]>('Kitchen');
+  const [targetTimeline, setTargetTimeline] = useState('8 weeks');
+  const [budgetBand, setBudgetBand] = useState<(typeof BUDGET_BANDS)[number]>('$30–60k');
+  const [scopeOption, setScopeOption] = useState<ScopeOptionId>('mid');
   const [beforeUri, setBeforeUri] = useState<string | null>(null);
   const [prompt, setPrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -63,14 +79,13 @@ export default function ImagineScreen() {
 
   const currentBefore = beforeUri || Image.resolveAssetSource(require('@/assets/images/imagine/before.jpg')).uri;
 
-  // Web-friendly photo upload
-  const pickPhoto = () => {
+  const pickPhoto = async () => {
     if (Platform.OS === 'web') {
       const input = document.createElement('input');
       input.type = 'file';
       input.accept = 'image/*';
-      input.onchange = (e: any) => {
-        const file = e.target.files?.[0];
+      input.onchange = (e: Event) => {
+        const file = (e.target as HTMLInputElement).files?.[0];
         if (file) {
           const reader = new FileReader();
           reader.onload = (ev) => setBeforeUri(ev.target?.result as string);
@@ -78,9 +93,16 @@ export default function ImagineScreen() {
         }
       };
       input.click();
-    } else {
-      // On native we would use expo-image-picker / camera
-      alert('On mobile this would open the camera or photo library (demo uses the example photo)');
+      return;
+    }
+    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!perm.granted) return;
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      quality: 0.85,
+    });
+    if (!result.canceled && result.assets[0]?.uri) {
+      setBeforeUri(result.assets[0].uri);
     }
   };
 
@@ -100,9 +122,19 @@ export default function ImagineScreen() {
   };
 
   const startProject = () => {
-    // For now we take them to the rich sample project experience
-    // (in a fuller version this would create a real project with the chosen vision pre-attached)
-    router.push('/residential/owner/projects/sample-90');
+    if (!chosenVision) return;
+    const stories = getStoriesForVisionAndScope(chosenVision.id, scopeOption);
+    const project = createProjectFromVision({
+      name: projectName.trim() || `${chosenVision.title} Remodel`,
+      address: address.trim() || undefined,
+      spaceType,
+      targetTimeline,
+      budgetBand,
+      notes: prompt.trim() || undefined,
+      vision: chosenVision.title,
+      stories,
+    });
+    router.push(`/residential/owner/projects/${project.id}`);
   };
 
   const reset = () => {
@@ -125,6 +157,51 @@ export default function ImagineScreen() {
               See your space transformed in seconds. Choose the vision you love.
             </ThemedText>
           </View>
+
+          <ThemedView type="backgroundElement" style={styles.basicsCard}>
+            <ThemedText type="subtitle">Project basics</ThemedText>
+            <ThemedText type="small" themeColor="textSecondary">
+              Name, location, and constraints feed scoping options.
+            </ThemedText>
+            <TextInput
+              value={projectName}
+              onChangeText={setProjectName}
+              placeholder="Kitchen refresh"
+              style={styles.basicsInput}
+            />
+            <TextInput
+              value={address}
+              onChangeText={setAddress}
+              placeholder="Address or neighborhood"
+              style={styles.basicsInput}
+            />
+            <View style={styles.chipRow}>
+              {SPACE_TYPES.map((s) => (
+                <Pressable
+                  key={s}
+                  onPress={() => setSpaceType(s)}
+                  style={[styles.chip, spaceType === s && styles.chipActive]}>
+                  <ThemedText type="small">{s}</ThemedText>
+                </Pressable>
+              ))}
+            </View>
+            <TextInput
+              value={targetTimeline}
+              onChangeText={setTargetTimeline}
+              placeholder="Target timeline (e.g. 8 weeks)"
+              style={styles.basicsInput}
+            />
+            <View style={styles.chipRow}>
+              {BUDGET_BANDS.map((b) => (
+                <Pressable
+                  key={b}
+                  onPress={() => setBudgetBand(b)}
+                  style={[styles.chip, budgetBand === b && styles.chipActive]}>
+                  <ThemedText type="small">{b}</ThemedText>
+                </Pressable>
+              ))}
+            </View>
+          </ThemedView>
 
           {/* The Before photo — the star of the experience */}
           <View style={styles.beforeSection}>
@@ -227,6 +304,30 @@ export default function ImagineScreen() {
                 This is the feeling we’ll design toward.
               </ThemedText>
 
+              <ThemedText type="subtitle" style={{ marginTop: Spacing.three }}>
+                Compare scope options
+              </ThemedText>
+              {SCOPE_OPTIONS.map((opt) => {
+                const active = scopeOption === opt.id;
+                const pts = getStoriesForVisionAndScope(chosenVision.id, opt.id).reduce(
+                  (sum, s) => sum + s.tasks.reduce((t, x) => t + x.points, 0),
+                  0
+                );
+                return (
+                  <Pressable
+                    key={opt.id}
+                    onPress={() => setScopeOption(opt.id)}
+                    style={[styles.scopeRow, active && styles.scopeRowActive]}>
+                    <ThemedText type="smallBold">
+                      {opt.label} — {pts} pts
+                    </ThemedText>
+                    <ThemedText type="small" themeColor="textSecondary">
+                      {opt.note}
+                    </ThemedText>
+                  </Pressable>
+                );
+              })}
+
               <Pressable onPress={startProject} style={styles.startProjectButton}>
                 <ThemedText type="smallBold" style={{ color: 'white', fontSize: 17 }}>
                   Start planning this project →
@@ -271,6 +372,33 @@ const styles = StyleSheet.create({
     fontSize: 17,
     lineHeight: 24,
     color: '#665E57',
+  },
+  basicsCard: {
+    padding: Spacing.four,
+    borderRadius: Radius.lg,
+    gap: Spacing.two,
+  },
+  basicsInput: {
+    backgroundColor: '#FFFBF6',
+    borderRadius: Radius.md,
+    padding: Spacing.two,
+    borderWidth: 1,
+    borderColor: '#D9D0C4',
+  },
+  chipActive: {
+    backgroundColor: '#8D5E3A',
+  },
+  scopeRow: {
+    padding: Spacing.three,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    borderColor: '#D9D0C4',
+    marginTop: Spacing.two,
+    gap: 4,
+  },
+  scopeRowActive: {
+    borderColor: '#8D5E3A',
+    backgroundColor: '#F0EBE3',
   },
   beforeSection: {
     marginTop: Spacing.one,

@@ -7,59 +7,59 @@ import { BurndownPlayback } from '@/components/burndown-playback';
 import { StoryGallery } from '@/components/story-gallery';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { TaskRow } from '@/components/ui/task-row';
+import { getStoryGalleryViews } from '@/lib/project-gallery';
+import { useProject } from '@/lib/projectStore';
+import { getBurndownEvents } from '@/lib/schedule';
+import { useWorkerProfile } from '@/lib/workerStore';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-
-type Task = { id: string; title: string; points: number; done: boolean };
-type Story = { id: string; title: string; tasks: Task[] };
 
 export function generateStaticParams() {
   return [{ projectId: 'sample-90' }];
 }
 
-const SAMPLE_STORIES: Story[] = [
-  {
-    id: 'story-rough',
-    title: 'Rough work',
-    tasks: [
-      { id: 'wt-1', title: 'Confirm arrival window', points: 1, done: true },
-      { id: 'wt-2', title: 'Install under-cabinet circuit', points: 3, done: false },
-    ],
-  },
-  {
-    id: 'story-finishes',
-    title: 'Finishes',
-    tasks: [
-      { id: 'wt-3', title: 'Backsplash tile (assist)', points: 5, done: false },
-      { id: 'wt-4', title: 'Final walkthrough prep', points: 2, done: false },
-    ],
-  },
-];
-
 export default function WorkerProjectDetailScreen() {
   const navigation = useNavigation();
   const { projectId } = useLocalSearchParams<{ projectId: string }>();
   const theme = useTheme();
-
-  useEffect(() => {
-    navigation.setOptions({ title: 'Project' });
-  }, [navigation]);
+  const { project, toggleTaskDone } = useProject(projectId);
+  const { profile: workerProfile } = useWorkerProfile();
+  const workerName = workerProfile?.name ?? 'Field Pro';
 
   const [playKey, setPlayKey] = useState(0);
-  const [doneById, setDoneById] = useState<Record<string, boolean>>(() => {
-    const initial: Record<string, boolean> = {};
-    for (const s of SAMPLE_STORIES) for (const t of s.tasks) initial[t.id] = t.done;
-    return initial;
-  });
 
-  const { totalPoints, donePoints } = useMemo(() => {
-    const all = SAMPLE_STORIES.flatMap((s) => s.tasks);
-    const total = all.reduce((sum, t) => sum + t.points, 0);
-    const done = all.reduce((sum, t) => sum + (doneById[t.id] ? t.points : 0), 0);
-    return { totalPoints: total, donePoints: done };
-  }, [doneById]);
+  useEffect(() => {
+    navigation.setOptions({ title: project?.name ?? 'Project' });
+  }, [navigation, project?.name]);
 
-  const percent = totalPoints === 0 ? 0 : Math.round((donePoints / totalPoints) * 100);
+  const percent = useMemo(() => {
+    if (!project || project.totalPoints === 0) return 0;
+    return Math.round((project.completedPoints / project.totalPoints) * 100);
+  }, [project]);
+
+  const burndownEvents = useMemo(
+    () => (project ? getBurndownEvents(project) : undefined),
+    [project]
+  );
+
+  const workerStories = useMemo(() => {
+    if (!project) return [];
+    return project.stories
+      .map((story) => ({
+        ...story,
+        tasks: story.tasks.filter((t) => t.assignee === workerName),
+      }))
+      .filter((s) => s.tasks.length > 0);
+  }, [project, workerName]);
+
+  if (!project) {
+    return (
+      <ThemedView style={styles.centered}>
+        <ThemedText type="subtitle">Project not found</ThemedText>
+      </ThemedView>
+    );
+  }
 
   return (
     <ScrollView
@@ -68,13 +68,10 @@ export default function WorkerProjectDetailScreen() {
       <SafeAreaView style={styles.safeArea}>
         <ThemedView style={styles.hero}>
           <ThemedText type="title" style={styles.heroTitle}>
-            Sample Project
+            {project.name}
           </ThemedText>
           <ThemedText themeColor="textSecondary" style={styles.heroMeta}>
-            {percent}% complete · {donePoints}/{totalPoints} points
-          </ThemedText>
-          <ThemedText type="small" themeColor="textSecondary">
-            Worker · {projectId}
+            {percent}% complete · your open tasks below
           </ThemedText>
         </ThemedView>
 
@@ -83,7 +80,7 @@ export default function WorkerProjectDetailScreen() {
             <View style={styles.cardHeaderText}>
               <ThemedText type="subtitle">Progress</ThemedText>
               <ThemedText type="small" themeColor="textSecondary">
-                Playback shows completion order.
+                Project burndown (read-only)
               </ThemedText>
             </View>
             <Pressable
@@ -95,53 +92,38 @@ export default function WorkerProjectDetailScreen() {
               </ThemedView>
             </Pressable>
           </View>
-
-          <BurndownPlayback key={playKey} percentComplete={percent} height={140} />
+          <BurndownPlayback
+            key={playKey}
+            project={project}
+            events={burndownEvents}
+            percentComplete={percent}
+          />
         </ThemedView>
 
         <ThemedView style={styles.section}>
           <ThemedText type="subtitle">Your tasks</ThemedText>
-          <ThemedText type="small" themeColor="textSecondary">
-            Gallery per story plus checklist.
-          </ThemedText>
 
-          {SAMPLE_STORIES.map((story) => (
-            <ThemedView key={story.id} type="backgroundElement" style={styles.card}>
-              <View style={styles.storyHeader}>
+          {workerStories.length === 0 ? (
+            <ThemedText themeColor="textSecondary">No open tasks — great work.</ThemedText>
+          ) : (
+            workerStories.map((story) => (
+              <ThemedView key={story.id} type="backgroundElement" style={styles.card}>
                 <ThemedText type="smallBold">{story.title}</ThemedText>
-              </View>
-
-              <StoryGallery storyId={story.id} />
-
-              <View style={[styles.taskList, { borderTopColor: theme.backgroundSelected }]}>
-                {story.tasks.map((task) => {
-                  const done = !!doneById[task.id];
-                  return (
-                    <Pressable
+                <StoryGallery storyId={story.id} views={getStoryGalleryViews(project, story.id)} />
+                <View style={[styles.taskList, { borderTopColor: theme.backgroundSelected }]}>
+                  {story.tasks.map((task, idx) => (
+                    <TaskRow
                       key={task.id}
-                      accessibilityRole="checkbox"
-                      accessibilityState={{ checked: done }}
-                      onPress={() => setDoneById((prev) => ({ ...prev, [task.id]: !done }))}
-                      style={({ pressed }) => [
-                        styles.taskRow,
-                        { borderBottomColor: theme.backgroundSelected },
-                        pressed && styles.pressed,
-                      ]}>
-                      <View style={[styles.checkDot, { borderColor: theme.backgroundSelected }]}>
-                        <ThemedText style={styles.checkText}>{done ? '✓' : ''}</ThemedText>
-                      </View>
-                      <View style={styles.taskText}>
-                        <ThemedText>{task.title}</ThemedText>
-                        <ThemedText type="small" themeColor="textSecondary">
-                          {task.points} pts · assigned to you (stub)
-                        </ThemedText>
-                      </View>
-                    </Pressable>
-                  );
-                })}
-              </View>
-            </ThemedView>
-          ))}
+                      task={task}
+                      isLast={idx === story.tasks.length - 1}
+                      subtitle={`${task.points} pts · assigned to you`}
+                      onToggle={() => toggleTaskDone(task.id)}
+                    />
+                  ))}
+                </View>
+              </ThemedView>
+            ))
+          )}
         </ThemedView>
       </SafeAreaView>
     </ScrollView>
@@ -149,11 +131,8 @@ export default function WorkerProjectDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  scrollBody: {
-    flexGrow: 1,
-    flexDirection: 'row',
-    justifyContent: 'center',
-  },
+  scrollBody: { flexGrow: 1, flexDirection: 'row', justifyContent: 'center' },
+  centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   safeArea: {
     flex: 1,
     maxWidth: MaxContentWidth,
@@ -162,7 +141,7 @@ const styles = StyleSheet.create({
     paddingBottom: BottomTabInset + Spacing.three,
     gap: Spacing.four,
   },
-  hero: { gap: Spacing.one, paddingTop: Spacing.two, paddingBottom: Spacing.one },
+  hero: { gap: Spacing.one, paddingTop: Spacing.two },
   heroTitle: { fontSize: 40, lineHeight: 44 },
   heroMeta: { marginTop: Spacing.half },
   section: { gap: Spacing.two },
@@ -172,7 +151,6 @@ const styles = StyleSheet.create({
   pillPressable: { borderRadius: Spacing.five },
   pill: { paddingHorizontal: Spacing.three, paddingVertical: Spacing.two, borderRadius: Spacing.five },
   pressed: { opacity: 0.75 },
-  storyHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   taskList: { marginTop: Spacing.two, borderTopWidth: 1 },
   taskRow: {
     flexDirection: 'row',
@@ -181,6 +159,7 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.two,
     borderBottomWidth: 1,
   },
+  taskRowLast: { borderBottomWidth: 0 },
   checkDot: {
     width: 22,
     height: 22,
@@ -192,4 +171,3 @@ const styles = StyleSheet.create({
   checkText: { fontSize: 14, lineHeight: 16 },
   taskText: { flex: 1, gap: 2 },
 });
-
