@@ -6,48 +6,45 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 
-export default function PersonaSelectScreen() {
+const SAMPLE_PROJECT_ID = 'sample-90';
+
+export default function WorkerProjectsScreen() {
   return (
     <ThemedView style={styles.page}>
       <SafeAreaView style={styles.safeArea}>
         <ThemedView style={styles.header}>
-          <ThemedText type="title">Delta</ThemedText>
-          <ThemedText themeColor="textSecondary" style={styles.subtitle}>
-            Rivvr Homes · Residential
-          </ThemedText>
-          <ThemedText themeColor="textSecondary" style={styles.subtitle}>
-            Choose your role to continue.
-          </ThemedText>
+          <ThemedText type="title">Projects</ThemedText>
+          <ThemedText themeColor="textSecondary">Worker</ThemedText>
         </ThemedView>
 
-        <ThemedView style={styles.cards}>
+        <ThemedView style={styles.section}>
+          <ThemedText type="subtitle">Residential</ThemedText>
+
           <Pressable
             accessibilityRole="button"
-            onPress={() => router.push('/residential/owner/projects')}
-            style={({ pressed }) => [styles.cardPressable, pressed && styles.pressed]}>
+            onPress={() => router.push(`/residential/worker/projects/${SAMPLE_PROJECT_ID}`)}
+            style={({ pressed }) => [styles.pressable, pressed && styles.pressed]}>
             <ThemedView type="backgroundElement" style={styles.card}>
-              <ThemedText type="subtitle">Project Owner</ThemedText>
-              <ThemedText themeColor="textSecondary">
-                Generate scope options, source materials, and schedule trades.
-              </ThemedText>
+              <ThemedText type="smallBold">Sample Project</ThemedText>
+              <ThemedText themeColor="textSecondary">90% complete · view remaining tasks</ThemedText>
             </ThemedView>
           </Pressable>
 
           <Pressable
             accessibilityRole="button"
-            onPress={() => router.push('/residential/worker/projects')}
-            style={({ pressed }) => [styles.cardPressable, pressed && styles.pressed]}>
+            onPress={() => router.push('/residential/worker/projects/new')}
+            style={({ pressed }) => [styles.pressable, pressed && styles.pressed]}>
             <ThemedView type="backgroundElement" style={styles.card}>
-              <ThemedText type="subtitle">Worker</ThemedText>
+              <ThemedText type="smallBold">＋ Set up account</ThemedText>
               <ThemedText themeColor="textSecondary">
-                Join projects, take tasks, and update progress from the field.
+                Create a worker profile to receive assignments.
               </ThemedText>
             </ThemedView>
           </Pressable>
         </ThemedView>
 
         <ThemedText type="small" themeColor="textSecondary" style={styles.footer}>
-          Projects → Stories → Tasks · points · burndown · critical path
+          Tasks · points · progress
         </ThemedText>
       </SafeAreaView>
     </ThemedView>
@@ -63,14 +60,11 @@ const styles = StyleSheet.create({
     paddingBottom: BottomTabInset + Spacing.three,
     gap: Spacing.four,
   },
-  header: {
-    paddingTop: Spacing.six,
-    gap: Spacing.one,
-  },
-  subtitle: { marginTop: Spacing.half },
-  cards: { gap: Spacing.three },
-  cardPressable: { borderRadius: Spacing.four },
+  header: { paddingTop: Spacing.four, gap: Spacing.one },
+  section: { gap: Spacing.three },
+  pressable: { borderRadius: Spacing.four },
   pressed: { opacity: 0.75 },
-  card: { padding: Spacing.four, borderRadius: Spacing.four, gap: Spacing.two },
+  card: { padding: Spacing.four, borderRadius: Spacing.four, gap: Spacing.one },
   footer: { marginTop: 'auto', textAlign: 'center' },
 });
+
